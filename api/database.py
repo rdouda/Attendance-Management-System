@@ -12,8 +12,7 @@ Base = declarative_base()
 class Student(Base):
     __tablename__ = 'students'
     uid = Column(sqlalchemy.Integer, primary_key=True)
-    first_name = Column(sqlalchemy.String(length=128))
-    last_name = Column(sqlalchemy.String(length=128))
+    name = Column(sqlalchemy.String(length=128))
     email = Column(sqlalchemy.String(length=128), unique=True)
 
 class Detected(Base):
@@ -23,8 +22,8 @@ class Detected(Base):
     detect_time = Column(sqlalchemy.DateTime, default=func.now())
     classroom = Column(sqlalchemy.Integer)
 
-Base.metadata.drop_all(engine)
-Base.metadata.create_all(engine)
+#Base.metadata.drop_all(engine)
+#Base.metadata.create_all(engine)
 
 Session = sessionmaker(engine)
 Session.configure(bind=engine)
@@ -40,8 +39,7 @@ def add_student(student: models.Student):
         return False
     else:
         new_student = Student(
-            first_name=student.first_name,
-            last_name=student.last_name,
+            name=student.name,
             email=student.email,
         )
         session.add(new_student)
@@ -53,8 +51,7 @@ def update_student(email, student: models.Student):
     if existing_student is None:
         return False
     existing_student.email = student.email
-    existing_student.first_name = student.first_name
-    existing_student.last_name = student.last_name
+    existing_student.name = student.name
     session.commit()
     return True
 
@@ -71,8 +68,7 @@ def list_students():
     for student in students:
         student_dict = {
             'uid': student.uid,
-            'first_name': student.first_name,
-            'last_name': student.last_name,
+            'name': student.name,
             'email': student.email,
         }
         students_list.append(student_dict)
@@ -105,22 +101,26 @@ def delete_detections():
     session.execute(text('ALTER TABLE detected AUTO_INCREMENT = 1'))
     session.commit()
 
-def calculate_average_detections_by_email(email, start_date, end_date, start_time, end_time, classroom: int):
+def calculate_average_detections_by_email(start_date, end_date, start_time, end_time):
     start_datetime = datetime.combine(start_date, datetime.strptime(start_time, '%H:%M:%S').time())
     end_datetime = datetime.combine(end_date, datetime.strptime(end_time, '%H:%M:%S').time())
     total_duration = (end_datetime - start_datetime).total_seconds()
     detections = (
         session.query(
             Detected.email,
+            Detected.classroom,
             func.count(Detected.detection_id)
         )
-        .filter(email.lower() == Detected.email, classroom == Detected.classroom, Detected.detect_time.between(start_datetime, end_datetime))
+        .filter(Detected.detect_time.between(start_datetime, end_datetime))
+        .group_by(Detected.email, Detected.classroom)
         .all()
     )
-    if detections is None:
-        return 0
-    count = detections[0][1]
-    detection_duration = count / total_duration
-    detection_percentage = detection_duration * 100
+    if not detections:
+        return []
+    results = []
+    for email, classroom, count in detections:
+        detection_duration = count / total_duration
+        detection_percentage = detection_duration * 100
+        results.append({'email': email, 'detection_count': count, 'detection_percentage':detection_percentage, 'classroom': classroom}) 
 
-    return {email: detection_percentage}
+    return results

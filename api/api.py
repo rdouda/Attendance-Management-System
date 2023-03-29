@@ -57,5 +57,5 @@ async def delete_detections():
     UTILS
 """
 @app.get("/average_detections_by_email", tags=['Utils'])
-async def get_average_detections_by_email(email: EmailStr, start_date: date, end_date: date, start_time: str, end_time: str, classroom: int):
-    return {'response': database.calculate_average_detections_by_email(email, start_date, end_date, start_time, end_time, classroom)}
+async def get_average_detections_by_email(start_date: date, end_date: date, start_time: str, end_time: str):
+    return {'response': database.calculate_average_detections_by_email(start_date, end_date, start_time, end_time)}
