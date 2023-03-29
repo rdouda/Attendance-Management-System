@@ -117,10 +117,26 @@ def calculate_average_detections_by_email(start_date, end_date, start_time, end_
     )
     if not detections:
         return []
-    results = []
+    results = {}
     for email, classroom, count in detections:
+        if email not in results:
+            results[email] = {'email': email, 'detection_percentage': 0, 'classrooms': []}
         detection_duration = count / total_duration
         detection_percentage = detection_duration * 100
-        results.append({'email': email, 'detection_count': count, 'detection_percentage':detection_percentage, 'classroom': classroom}) 
+        results[email]['detection_percentage'] += detection_percentage
+        results[email]['classrooms'].append(classroom)
 
-    return results
+    for email in results:
+        results[email]['detection_percentage'] /= len(results[email]['classrooms'])
+        results[email]['classrooms'] = list(set(results[email]['classrooms']))
+
+    final_results = []
+    for email in results:
+        final_results.append({
+            'email': email,
+            'detection_count': len(results[email]['classrooms']),
+            'detection_percentage': results[email]['detection_percentage'],
+            'classrooms': results[email]['classrooms']
+        })
+
+    return final_results
