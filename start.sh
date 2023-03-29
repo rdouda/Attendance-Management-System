@@ -4,10 +4,9 @@ source venv/bin/activate
 
 sudo systemctl start mariadb
 while ! mysqladmin ping -h localhost --silent; do
-    sleep 1
+    sleep 2
 done
-sleep 2
 # Wait database server to start
 
-# Launch API
+# Launch
 python main.py

@@ -3,7 +3,7 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy.dialects.mysql import BIGINT
 from sqlalchemy import Column, text
 from sqlalchemy.sql import func
-from . import models
+from .models import *
 from datetime import datetime
 
 engine = sqlalchemy.create_engine("mariadb+mariadbconnector://root:rdouda@localhost:3306/AttendanceSystem", echo=True)
@@ -15,15 +15,15 @@ class Student(Base):
     name = Column(sqlalchemy.String(length=128))
     email = Column(sqlalchemy.String(length=128), unique=True)
 
-class Detected(Base):
-    __tablename__ = 'detected'
+class Detection(Base):
+    __tablename__ = 'detections'
     detection_id = Column(BIGINT(unsigned=True), primary_key=True)
     email = Column(sqlalchemy.String(length=128))
     detect_time = Column(sqlalchemy.DateTime, default=func.now())
     classroom = Column(sqlalchemy.Integer)
 
-#Base.metadata.drop_all(engine)
-#Base.metadata.create_all(engine)
+Base.metadata.drop_all(engine)
+Base.metadata.create_all(engine)
 
 Session = sessionmaker(engine)
 Session.configure(bind=engine)
@@ -33,7 +33,7 @@ session = Session()
 """
     STUDENT MANAGEMENT
 """
-def add_student(student: models.Student):
+def add_student(student: StudentModel):
     existing_student = session.query(Student).filter_by(email=student.email.lower()).first()
     if existing_student:
         return False
@@ -46,7 +46,7 @@ def add_student(student: models.Student):
         session.commit()
         return True
 
-def update_student(email, student: models.Student):
+def update_student(email, student: StudentModel):
     existing_student = session.query(Student).filter_by(email=email.lower()).first()
     if existing_student is None:
         return False
@@ -77,13 +77,13 @@ def list_students():
 """
     DETECTION
 """
-def add_detection(detected: models.Detection):
-    new_detection = Detected(email=detected.email, classroom=detected.classroom)
+def add_detection(detected: DetectionModel):
+    new_detection = Detection(email=detected.email, classroom=detected.classroom)
     session.add(new_detection)
     session.commit()
 
 def list_detections():
-    detections = session.query(Detected).all()
+    detections = session.query(Detection).all()
     detections_list = []
     for detection in detections:
         detection_dict = {
@@ -96,7 +96,7 @@ def list_detections():
     return detections_list
 
 def delete_detections():
-    session.query(Detected).delete()
+    session.query(Detection).delete()
     session.commit()
     session.execute(text('ALTER TABLE detected AUTO_INCREMENT = 1'))
     session.commit()
@@ -107,14 +107,14 @@ def calculate_average_detections_by_email(start_date, end_date, start_time, end_
     results = []
     detections = (
         session.query(
-            Detected.email,
-            Detected.classroom,
-            func.count(Detected.detection_id),
-            func.min(Detected.detect_time),
-            func.max(Detected.detect_time)
+            Detection.email,
+            Detection.classroom,
+            func.count(Detection.detection_id),
+            func.min(Detection.detect_time),
+            func.max(Detection.detect_time)
         )
-        .filter(Detected.detect_time.between(start_datetime, end_datetime))
-        .group_by(Detected.email, Detected.classroom)
+        .filter(Detection.detect_time.between(start_datetime, end_datetime))
+        .group_by(Detection.email, Detection.classroom)
         .all()
     )
     if not detections:

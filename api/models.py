@@ -1,9 +1,12 @@
 from pydantic import BaseModel, Field, EmailStr
 
-class Student(BaseModel):
+class StudentModel(BaseModel):
     name: str = Field(...)
     email: EmailStr = Field(...)
 
-class Detection(BaseModel):
+class DetectionModel(BaseModel):
     email: EmailStr = Field(...)
     classroom: int = Field(...)
+
+class EmailModel(BaseModel):
+    email: EmailStr = Field(...)
