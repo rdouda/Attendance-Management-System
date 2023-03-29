@@ -5,7 +5,7 @@ from sqlalchemy import Column, text
 from sqlalchemy.sql import func
 from . import models
 from . import utils
-from datetime import datetime, time
+from datetime import datetime
 
 engine = sqlalchemy.create_engine("mariadb+mariadbconnector://root:rdouda@localhost:3306/AttendanceSystem", echo=True)
 Base = declarative_base()
