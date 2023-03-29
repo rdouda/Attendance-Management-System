@@ -4,7 +4,6 @@ from sqlalchemy.dialects.mysql import BIGINT
 from sqlalchemy import Column, text
 from sqlalchemy.sql import func
 from . import models
-from . import utils
 from datetime import datetime
 
 engine = sqlalchemy.create_engine("mariadb+mariadbconnector://root:rdouda@localhost:3306/AttendanceSystem", echo=True)
@@ -24,8 +23,8 @@ class Detected(Base):
     detect_time = Column(sqlalchemy.DateTime, default=func.now())
     classroom = Column(sqlalchemy.Integer)
 
-#Base.metadata.drop_all(engine)
-#Base.metadata.create_all(engine)
+Base.metadata.drop_all(engine)
+Base.metadata.create_all(engine)
 
 Session = sessionmaker(engine)
 Session.configure(bind=engine)
