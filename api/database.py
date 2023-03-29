@@ -104,39 +104,24 @@ def delete_detections():
 def calculate_average_detections_by_email(start_date, end_date, start_time, end_time):
     start_datetime = datetime.combine(start_date, datetime.strptime(start_time, '%H:%M:%S').time())
     end_datetime = datetime.combine(end_date, datetime.strptime(end_time, '%H:%M:%S').time())
-    total_duration = (end_datetime - start_datetime).total_seconds()
+    results = []
     detections = (
         session.query(
             Detected.email,
             Detected.classroom,
-            func.count(Detected.detection_id)
+            func.count(Detected.detection_id),
+            func.min(Detected.detect_time),
+            func.max(Detected.detect_time)
         )
         .filter(Detected.detect_time.between(start_datetime, end_datetime))
         .group_by(Detected.email, Detected.classroom)
         .all()
     )
     if not detections:
-        return []
-    results = {}
-    for email, classroom, count in detections:
-        if email not in results:
-            results[email] = {'email': email, 'detection_percentage': 0, 'classrooms': []}
-        detection_duration = count / total_duration
-        detection_percentage = detection_duration * 100
-        results[email]['detection_percentage'] += detection_percentage
-        results[email]['classrooms'].append(classroom)
+        return results
+    
+    for email, classroom, count, min_detect_time, max_detect_time in detections:
+        detection_duration = (max_detect_time - min_detect_time).total_seconds()
+        results.append({'email': email, 'detection_count': count, 'detection_duration': detection_duration, 'classroom': classroom}) 
 
-    for email in results:
-        results[email]['detection_percentage'] /= len(results[email]['classrooms'])
-        results[email]['classrooms'] = list(set(results[email]['classrooms']))
-
-    final_results = []
-    for email in results:
-        final_results.append({
-            'email': email,
-            'detection_count': len(results[email]['classrooms']),
-            'detection_percentage': results[email]['detection_percentage'],
-            'classrooms': results[email]['classrooms']
-        })
-
-    return final_results
+    return results
