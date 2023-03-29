@@ -3,7 +3,6 @@ from . import models
 from pydantic import EmailStr
 from fastapi import FastAPI
 from datetime import date
-import uvicorn
 
 app = FastAPI(title="Attendance System API", version='1.0')
 
@@ -60,7 +59,3 @@ async def delete_detections():
 @app.get("/average_detections_by_email", tags=['Utils'])
 async def get_average_detections_by_email(email: EmailStr, start_date: date, end_date: date, start_time: str, end_time: str, classroom: int):
     return {'response': database.calculate_average_detections_by_email(email, start_date, end_date, start_time, end_time, classroom)}
-
-
-if __name__=="__main__":
-    uvicorn.run("api.api:app", reload=True)
